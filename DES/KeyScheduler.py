@@ -1,4 +1,5 @@
 # Implements the PC-1 function. Permutates 64-bit key into 56-bits.
+# Returns 56-bit key, permutated using PC1 table.
 def pc1(key_block):
     PC1_TABLE = [
         57, 49, 41, 33, 25, 17, 9,
@@ -17,6 +18,7 @@ def pc1(key_block):
 
 
 # Implements the PC-2 functions. Permutates 56-bit key into 48-bits.
+# Returns list of 16 [48-bit] keys, permutated using PC2 table.
 def pc2(shifted_keys):
     PC2_TABLE = [
         14, 17, 11, 24,  1,  5, 
