@@ -30,10 +30,10 @@ def validate_input(plaintext, key):
 
 
 # Converts binary to hexadecimal value. 
-# Omits '0x' in output and adds leading zeros if length < 16.
-def bin_to_hex(bin):
+# Omits '0x' in output and adds leading zeros if length < size.
+def bin_to_hex(bin, size):
     bin = int(bin, 2)
-    return hex(bin)[2:].zfill(16)
+    return hex(bin)[2:].zfill(size)
 
 
 # Converts hex value to binary value. 
@@ -120,6 +120,10 @@ def des(block, keys, encode):
     # Split block in half / 32 bits each
     l_prev, r_prev = split_block(ip_permutation, 32)
 
+    if encode:
+        # Print left and right after IP permutation
+        print(f"IP: L:{bin_to_hex(l_prev, 8)}    R:{bin_to_hex(r_prev, 8)}")
+
     for round in sequence:  # 16 rounds
         # Left = previous R
         curr_l = r_prev 
@@ -130,16 +134,32 @@ def des(block, keys, encode):
         # Initialize prev variables
         r_prev = curr_r
         l_prev = curr_l
+        
+        if encode:
+            # Print results in each round
+            output_per_round(round, keys, curr_l, curr_r)
 
     # Permutate using the IP Inverse table and swap L and R.
     ip_inverse = permutation(IP_INVERSE_TABLE, curr_r + curr_l)
+
+    if encode:
+        # Print left and right after IP permutation
+        print(f"IP inverse: L:{bin_to_hex(ip_inverse[:32], 8)}  R:{bin_to_hex(ip_inverse[32:], 8)}")
     
     return ip_inverse
 
 
+def output_per_round(round, keys, l_value, r_value):
+
+    # Convert key to eight 6-bit values
+    key_hex = "".join(f"{int(keys[round][i:i+6], 2):02X}" for i in range(0, 48, 6))
+
+    print(f"R{round}:   K:{key_hex}      L:{bin_to_hex(l_value, 8)}       R:{bin_to_hex(r_value, 8)}")
+
+
 # Function to print output in readable format.
 def print_results(plaintext, key, encrypted_result, decrypted_result):
-    print(f"Plaintext:  {plaintext}")
+    print(f"\nPlaintext:  {plaintext}")
     print(f"Key:        {key}")
     print(f"Encrypted:  {encrypted_result}")
     print(f"Decrypted:  {decrypted_result}")
@@ -166,7 +186,7 @@ def main():
         decrypted = des(encrpyted, keys, False)  # Decrypt
 
         # Print results
-        print_results(args.plaintext, args.key, bin_to_hex(encrpyted), bin_to_hex(decrypted))
+        print_results(args.plaintext, args.key, bin_to_hex(encrpyted, 16), bin_to_hex(decrypted, 16))
 
 
 if __name__ == "__main__":
