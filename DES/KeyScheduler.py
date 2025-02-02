@@ -1,36 +1,10 @@
-# Implements the PC-1 function. Permutates 64-bit key into 56-bits.
-# Returns 56-bit key, permutated using PC1 table.
-def pc1(key_block):
-    PC1_TABLE = [
-        57, 49, 41, 33, 25, 17, 9,
-        1, 58, 50, 42, 34, 26, 18,
-        10, 2, 59, 51, 43, 35, 27,
-        19, 11, 3, 60, 52, 44, 36,
-        63, 55, 47, 39, 31, 23, 15,
-        7, 62, 54, 46, 38, 30, 22,
-        14, 6, 61, 53, 45, 37, 29,
-        21, 13, 5, 28, 20, 12, 4
-    ]
-
-    permuted_key = ''.join(key_block[pos - 1] for pos in PC1_TABLE)
-    
-    return permuted_key
+from Tables import PC1_TABLE, PC2_TABLE
+from DES import permutation
 
 
 # Implements the PC-2 functions. Permutates 56-bit key into 48-bits.
 # Returns list of 16 [48-bit] keys, permutated using PC2 table.
 def pc2(shifted_keys):
-    PC2_TABLE = [
-        14, 17, 11, 24,  1,  5, 
-        3, 28, 15,  6, 21, 10, 
-        23, 19, 12,  4, 26,  8, 
-        16,  7, 27, 20, 13,  2, 
-        41, 52, 31, 37, 47, 55, 
-        30, 40, 51, 45, 33, 48, 
-        44, 49, 39, 56, 34, 53, 
-        46, 42, 50, 36, 29, 32
-    ]
-    
     permuted_keys = []  # Used to store shifted keys
 
     # Iterate through list of keys and permutate.
@@ -68,5 +42,12 @@ def lcs(permuted_key):
     return shifted_keys
 
 
+# Function to create subkeys from the original key.
+# Returns list of keys.
+def create_keys(key):
+    kplus = permutation(PC1_TABLE, key)  # Permutate using PC-1 table
+    shifted_keys = lcs(kplus)  # Generate 16 keys using left circular shift
+    pc2_keys = pc2(shifted_keys)  # 56 -> 48 bits using PC-2
 
+    return pc2_keys
 
