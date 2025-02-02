@@ -149,8 +149,8 @@ def des(block, keys, encode):
     return ip_inverse
 
 
+# Function that prints the current values per round.
 def output_per_round(round, keys, l_value, r_value):
-
     # Convert key to eight 6-bit values
     key_hex = "".join(f"{int(keys[round][i:i+6], 2):02X}" for i in range(0, 48, 6))
 
