@@ -2,12 +2,20 @@ import argparse
 import KeyScheduler as ks
 import Tables as tables
 
+
 # Argument parser for command line args.
 def get_args():
     parser = argparse.ArgumentParser(">>> DES Cipher")
-    parser.add_argument("-p", "--plaintext", help="Plaintext input", required=False, default="0123456789ABCDEF")
-    parser.add_argument("-k", "--key", help="Key input", required=False, default="133457799BBCDFF1")
+    parser.add_argument("-p", "--plaintext", help="Plaintext input", required=False, default="02468aceeca86420")
+    parser.add_argument("-k", "--key", help="Key input", required=False, default="0f1571c947d9e859")
     return parser.parse_args()
+
+
+# Converts binary to hexadecimal value. Omits '0x' in output.
+def bin_to_hex(bin):
+    bin = int(bin, 2)
+
+    return hex(bin)[2:]
 
 
 # Converts hex value to binary value. 
@@ -116,8 +124,7 @@ def sbox_sub(expanded_bits):
         row = int(curr_6bits[0] + curr_6bits[-1], 2)  # Get row from first and last bit
 
         col = int(curr_6bits[1:5], 2)  # Get column from middle 4 bits
-        test = f"{S_BOXES[i][row][col]:04b}"
-        print(test)
+
         # Look up value, convert to 4 bits, and concat to output
         output += f"{S_BOXES[i][row][col]:04b}"
     
@@ -145,18 +152,17 @@ def des(block, keys):
     l_prev, r_prev = split_block(block, 32)
 
     for n in range(16):  # 16 rounds
-        curr_l = r_prev
-        # curr_r = int(l_prev, 2) ^ int(function_f(r_prev, keys[n]), 2)
+        # Left = previous R
+        curr_l = r_prev 
+
+        # Right = previous L XOR F(previous R, current key)
         curr_r = xor_function(l_prev, function_f(r_prev, keys[n]), '032b')
-        
-        # print(f"L{n}: {curr_l}") '0010 0011 0100 1010 1010 1001 1011 1011'
-        # print(f"R{n}: {curr_r}") '0010 0011 0100 1010 1010 1001 1011 1011'
-        # '1110 1111 0100 1010 0110 0101 0100 0100'
 
         # Initialize prev variables
         r_prev = curr_r
         l_prev = curr_l
 
+    # Permutate using the IP Inverse table and swap L and R.
     binary_result = permutation(tables.IP_INVERSE_TABLE, curr_r + curr_l)
     
     return binary_result
@@ -184,6 +190,7 @@ def main():
     result = des(ip_permutation, pc2_keys)
 
     print(result)
+    print(bin_to_hex(result))
 
     
 
