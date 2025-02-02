@@ -6,16 +6,34 @@ from Tables import P_TABLE, E_TABLE, IP_INVERSE_TABLE, IP_TABLE, S_BOXES
 # Argument parser for command line args.
 def get_args():
     parser = argparse.ArgumentParser(">>> DES Cipher")
-    parser.add_argument("-p", "--plaintext", help="Plaintext input", required=False, default="02468aceeca86420")
-    parser.add_argument("-k", "--key", help="Key input", required=False, default="0f1571c947d9e859")
+    parser.add_argument("-p", "--plaintext", help="Plaintext input", required=True)
+    parser.add_argument("-k", "--key", help="Key input", required=True)
     return parser.parse_args()
 
 
-# Converts binary to hexadecimal value. Omits '0x' in output.
+# Validates the plaintext and key.
+# Returns True if validation passed.
+def validate_input(plaintext, key):
+    # Check if plaintext and key are 16 characters long.
+    if len(plaintext) != 16 or len(key) != 16: 
+        print(">>> Plaintext and key must be 16 characters long.")
+        return False
+    
+    try:  # Check for invalid hex values.
+        hexify(plaintext)
+        hexify(key)
+    except ValueError:
+        print(">>> Invalid hex values found.")
+        return False
+    
+    return True
+
+
+# Converts binary to hexadecimal value. 
+# Omits '0x' in output and adds leading zeros if length < 16.
 def bin_to_hex(bin):
     bin = int(bin, 2)
-
-    return hex(bin)[2:]
+    return hex(bin)[2:].zfill(16)
 
 
 # Converts hex value to binary value. 
@@ -23,10 +41,9 @@ def hex_to_binary(hex):
     return f"{hex:064b}"
 
 
-# Turns input (plaintext) into hexadecimal.
+# Turns input into hexadecimal.
 def hexify(pt):
     hex = "0x" + pt
-
     return int(hex, 16)
 
 
@@ -53,9 +70,11 @@ def sbox_sub(expanded_bits):
         # Extract 6 bits each iteration
         curr_6bits = expanded_bits[i * 6:(i + 1) * 6]
 
-        row = int(curr_6bits[0] + curr_6bits[-1], 2)  # Get row from first and last bit
+        # Get row from first and last bit
+        row = int(curr_6bits[0] + curr_6bits[-1], 2)  
 
-        col = int(curr_6bits[1:5], 2)  # Get column from middle 4 bits
+        # Get column from middle 4 bits
+        col = int(curr_6bits[1:5], 2)  
 
         # Look up value, convert to 4 bits, and concat to output
         output += f"{S_BOXES[i][row][col]:04b}"
@@ -118,30 +137,37 @@ def des(block, keys, encode):
     return ip_inverse
 
 
+# Function to print output in readable format.
+def print_results(plaintext, key, encrypted_result, decrypted_result):
+    print(f"Plaintext:  {plaintext}")
+    print(f"Key:        {key}")
+    print(f"Encrypted:  {encrypted_result}")
+    print(f"Decrypted:  {decrypted_result}")
+
+
 # Runs the program.
 def main():
     args = get_args()
 
-    # Convert input to hexadecimals
-    key = hexify(args.key)
-    hex = hexify(args.plaintext)
+    if validate_input(args.plaintext, args.key):
+        # Convert input to hexadecimals
+        key = hexify(args.key)
+        plaintext = hexify(args.plaintext)
 
-    # Convert hex values to binary
-    key = hex_to_binary(key)
-    bin_block = hex_to_binary(hex)
+        # Convert hex values to binary
+        bin_key = hex_to_binary(key)
+        bin_block = hex_to_binary(plaintext)
 
-    # Create keys
-    keys = ks.create_keys(key)
+        # Create keys
+        keys = ks.create_keys(bin_key)
 
-    encrpyted = des(bin_block, keys, True)
+        # DES functions
+        encrpyted = des(bin_block, keys, True)  # Encrypt
+        decrypted = des(encrpyted, keys, False)  # Decrypt
 
-    print(f"Encrypt: {bin_to_hex(encrpyted)}")
+        # Print results
+        print_results(args.plaintext, args.key, bin_to_hex(encrpyted), bin_to_hex(decrypted))
 
-    # decrypted = decode_def(encrpyted, keys)
-    decrypted = des(encrpyted, keys, False)
-
-    print(f"Decrypt: {bin_to_hex(decrypted)}")
-    
 
 if __name__ == "__main__":
     main()
